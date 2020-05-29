@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title> 2048 versión Jiménez</title>
+ </head>
+ <body>
+	<center>
+	<a style="cursor: pointer; padding-left: 10%;" onclick="return load();">Reiniciar juego</a>
+	<div id="canvas"></div>	
+	<h2>Puntuacion : <div style="display:inline;" id="score"></div></h2>
+	<b>COMO JUGAR:</b> Muevete usando las flechas del teclado
+	</center>
+	<script type="text/javascript">
+    <!--
+	//Tamaño de la tabla
+	var size = 4; //tamaño en alto y ancho de la tabla, 4 columnas por defecto, pero puede cambiarse
+	var min = 0; //tamaño mímino, se usa para limitar la obtención de valores al azar
+	var max = size - 1; //tamaño máximo igual al tamaño (size) - 1, esto se debe a que el conteo comienza en 0, no en 1
+	
+	var isMoved = true;
+	var score = 0; //declara puntuación
+	
+	var excludeIds = [];
+
+	function load() {
+		//Crea una tabla, y con un contador, crea columnas la cantidad de veces que se le asignó
+		var html = '<table border="1">';
+		for(var row=0;row<size;row++) {//Se crean las columnas horizontales
+			html += '<tr>';
+			for(var col=0;col<size;col++) {//salto de línea
+				var id = row+""+col;//guarda
+				html += '<td align="center" valign="center" height="40" width="40" id="'+id+'"></td>';//imprime en código HTML
+			}
+			html += '</tr>';
+		}
+		html += '</table>';
+		
+		document.getElementById("canvas").innerHTML = html; //Le hace saber al programa su vinculación con código HTML
+
+		var id1 = getId(); //Asigna un valor a la columna seleccionada por la función
+		var id2 = getId(); //Asigna un valor a la columna seleccionada por la función
+		
+		//Establece los primeros dos valores al iniciar, un 2 y un 4
+		document.getElementById(id1).innerHTML = "2";//Imprime un 2 a su posición establecida
+		document.getElementById(id2).innerHTML = "4";//Imprime un 4 a su posición establecida
+
+		document.getElementById(id1).style.backgroundColor = getColor(2);//Colorea la columna con el color establecido al 2
+		document.getElementById(id2).style.backgroundColor = getColor(4);//Colorea la columna con el color establecido al 4
+		
+		score = 0; //Como apenas inicia, la puntuación es 0
+		document.getElementById("score").innerHTML = score; //Convierte valor de la puntuación a HTML y lo imprime en la interfaz
+
+		return false;// termina proceso
+	}
+	function getRandom()
+	{
+		return Math.floor(Math.random()*(max-min+1)+min); //Obtiene una columna al azar dependiendo del tamaño de la tabla, con esto es más fácil agrandar la tabla al gusto sin necesidad de código extra
+	}
+	function getId() //Función para asignar coordenadas al azar
+	{
+		var i = getRandom(); //asigna valor 1
+		var j = getRandom(); //asigna valor 2
+		return i+""+j; //Guarda ambos y los retoma en la función donde fue llamado (getrandom)
+	}
+	function up() {
+		//Proceso para establecer la ubicación de las columnas vacías
+		isMoved = false;//
+		excludeIds = [];
+		for(var j=min;j<=max;j++) { //Salto de línea
+			for(var i=min;i<=max;i++) { //Revisa horizontal
+				var id = i+""+j; //guarda coordenadas
+				if(document.getElementById(id).innerHTML != "") { //Si la columna está vacía 
+					moveUp(id); //Se manda a llamar el proceso para determinar si el valor debe unirse o solo moverse
+				}
+			}
+		}
+
+		//Después de haber mandado a llamar la función de movimiento (MoveUp), checará si la columna establecida se movió o no
+
+		if(isMoved == true) { //Si se movió
+			update(); //Actualiza a valor nulo o valor anterior
+		}
+		return false;
+	}
+	function moveUp(id) {		
+		if(!id.startsWith(min)) { //Si la id (posición de la tabla) recién está comenzado (posición 0 - min)
+			var arr = id.split("");
+			var i = parseInt(arr[0]);
+			var j = parseInt(arr[1]);
+			for(var k=(i-1);k>=min;k--) {
+				var nId = k+""+j;
+				if(document.getElementById(nId).innerHTML != "") {
+					var val = parseInt(document.getElementById((k+1)+""+j).innerHTML);
+					var nVal = parseInt(document.getElementById(nId).innerHTML);
+					if(val == nVal) { //Si ambos números coinciden
+						if(excludeIds.indexOf(nId) == -1){ //
+							excludeIds.push(nId);
+							document.getElementById(nId).innerHTML = (val+nVal);//Suma los valores que coincidieron
+							document.getElementById(nId).style.backgroundColor = getColor((val+nVal));//Colorea la columna dependiendo del valor sumado
+							document.getElementById((k+1)+""+j).innerHTML = "";//El valor de atrás se vacía
+							document.getElementById((k+1)+""+j).style.backgroundColor = "#ffffff";//colorea la columna de blanco 
+							isMoved = true;//Si se unió, el de atrás cambia de lugar
+							score += (val+nVal);//La puntuación añade una suma del resultado de todos los números que coincidieron al moverse
+						}
+						break;
+					}
+				}
+				else {
+					document.getElementById(nId).innerHTML = document.getElementById((k+1)+""+j).innerHTML;
+					document.getElementById(nId).style.backgroundColor = document.getElementById((k+1)+""+j).style.backgroundColor;
+					document.getElementById((k+1)+""+j).innerHTML = "";
+					document.getElementById((k+1)+""+j).style.backgroundColor = "#ffffff";
+					isMoved = true;
+				}
+			}
+		}
+		return false;
+	}
+	function left() {
+		isMoved = false;
+		excludeIds = [];
+		for(var i=min;i<=max;i++) {
+			for(var j=min;j<=max;j++) {
+				var id = i+""+j;
+				if(document.getElementById(id).innerHTML != "") {
+					moveLeft(id);
+				}
+			}
+		}
+		if(isMoved == true) {
+			update();
+		}
+		return false;
+	}
+	function moveLeft(id) {
+		if(!id.endsWith(min)) {
+			var arr = id.split("");
+			var i = parseInt(arr[0]);
+			var j = parseInt(arr[1]);
+			for(var k=(j-1);k>=min;k--) {
+				var nId = i+""+k;
+				if(document.getElementById(nId).innerHTML != "") {
+					var val = parseInt(document.getElementById(i+""+(k+1)).innerHTML);
+					var nVal = parseInt(document.getElementById(nId).innerHTML);
+					if(val == nVal) {
+						if(excludeIds.indexOf(nId) == -1){
+							excludeIds.push(nId);
+							document.getElementById(nId).innerHTML = (val+nVal);
+							document.getElementById(nId).style.backgroundColor = getColor((val+nVal));
+							document.getElementById(i+""+(k+1)).innerHTML = "";
+							document.getElementById(i+""+(k+1)).style.backgroundColor = "#ffffff";
+							isMoved = true;
+							score += (val+nVal);
+						}
+						break;
+					}
+				}
+				else {
+					document.getElementById(nId).innerHTML = document.getElementById(i+""+(k+1)).innerHTML;
+					document.getElementById(nId).style.backgroundColor = document.getElementById(i+""+(k+1)).style.backgroundColor;
+					document.getElementById(i+""+(k+1)).innerHTML = "";
+					document.getElementById(i+""+(k+1)).style.backgroundColor = "#ffffff";
+					isMoved = true;
+				}
+			}
+		}
+		return false;
+	}
+	function down() {
+		isMoved = false;
+		excludeIds = [];
+		for(var i=min;i<=max;i++) {
+			for(var j=max;j>=min;j--) {
+				var id = j+""+i;
+				if(document.getElementById(id).innerHTML != "") {
+					moveDown(id);
+				}
+			}
+		}
+		if(isMoved == true) {
+			update();
+		}
+		return false;
+	}
+	function moveDown(id) {
+		if(!id.startsWith(max)) {
+			var arr = id.split("");
+			var i = parseInt(arr[0]);
+			var j = parseInt(arr[1]);
+			for(var k=(i+1);k<=max;k++) {
+				var nId = k+""+j;
+				if(document.getElementById(nId).innerHTML != "") {
+					var val = parseInt(document.getElementById((k-1)+""+j).innerHTML);
+					var nVal = parseInt(document.getElementById(nId).innerHTML);
+					if(val == nVal) {
+						if(excludeIds.indexOf(nId) == -1){
+							excludeIds.push(nId);
+							document.getElementById(nId).innerHTML = (val+nVal);
+							document.getElementById(nId).style.backgroundColor = getColor((val+nVal));
+							document.getElementById((k-1)+""+j).innerHTML = "";
+							document.getElementById((k-1)+""+j).style.backgroundColor = "#ffffff";
+							isMoved = true;
+							score += (val+nVal);
+						}
+						break;
+					}
+				}
+				else {
+					document.getElementById(nId).innerHTML = document.getElementById((k-1)+""+j).innerHTML;
+					document.getElementById(nId).style.backgroundColor = document.getElementById((k-1)+""+j).style.backgroundColor;
+					document.getElementById((k-1)+""+j).innerHTML = "";
+					document.getElementById((k-1)+""+j).style.backgroundColor = "#ffffff";
+					isMoved = true;
+				}
+			}
+		}
+		return false;
+	}
+	function right() {
+		isMoved = false;
+		excludeIds = [];
+		for(var i=min;i<=max;i++) {
+			for(var j=max;j>=min;j--) {
+				var id = i+""+j;
+				if(document.getElementById(id).innerHTML != "") {
+					moveRight(id);
+				}
+			}
+		}
+		if(isMoved == true) {
+			update();
+		}
+		return false;
+	}
+	function moveRight(id) {
+		if(!id.endsWith(max)) {
+			var arr = id.split("");
+			var i = parseInt(arr[0]);
+			var j = parseInt(arr[1]);
+			for(var k=(j+1);k<=max;k++) {
+				var nId = i+""+k;
+				if(document.getElementById(nId).innerHTML != "") {
+					var val = parseInt(document.getElementById(i+""+(k-1)).innerHTML);
+					var nVal = parseInt(document.getElementById(nId).innerHTML);
+					if(val == nVal) {
+						if(excludeIds.indexOf(nId) == -1){
+							excludeIds.push(nId);
+							document.getElementById(nId).innerHTML = (val+nVal);
+							document.getElementById(nId).style.backgroundColor = getColor((val+nVal));
+							document.getElementById(i+""+(k-1)).innerHTML = "";
+							document.getElementById(i+""+(k-1)).style.backgroundColor = "#ffffff";
+							isMoved = true;
+							score += (val+nVal);
+						}
+						break;
+					}
+				}
+				else {
+					document.getElementById(nId).innerHTML = document.getElementById(i+""+(k-1)).innerHTML;
+					document.getElementById(nId).style.backgroundColor = document.getElementById(i+""+(k-1)).style.backgroundColor;
+					document.getElementById(i+""+(k-1)).innerHTML = "";
+					document.getElementById(i+""+(k-1)).style.backgroundColor = "#ffffff";
+					isMoved = true;
+				}
+			}
+		}
+		return false;
+	}
+	function update() {		
+		//Añade un nuevo valor (actualiza)
+		var ids = []; //crea un arreglo en las posiciones
+		for(var i=min;i<=max;i++) { //Salto de línea
+			for(var j=min;j<=max;j++) { //Checa horizontalmente
+				var id = i+""+j; //Guarda coordenadas
+				if(document.getElementById(id).innerHTML == "") { //Si la columna está vacía
+					ids.push(id); //Mueve el valor anterior a la posición actual
+				}
+			}
+		}
+		var id = ids[Math.floor(Math.random()*ids.length)];//Elige columna vacía al azar
+
+		//Probabilidad 1 de cada 6 para sacar un 4 o un 2 en el valor nuevo
+		var doscuatro = Math.floor(Math.random()*(6-1)); //Número al azar entre 1 y 6
+		if(doscuatro==1)//Si es igual a 1
+		{
+			document.getElementById(id).innerHTML = "4";//manda un 4
+			document.getElementById(id).style.backgroundColor = getColor(4); //colorea la columna establecida a un 4
+		}
+		else//Si es cualquier otro
+		{
+			document.getElementById(id).innerHTML = "2";//manda un 2
+			document.getElementById(id).style.backgroundColor = getColor(2); //colorea la columna establecida a un 2
+		}
+		
+
+		
+		var allFilled = true; //Al actualizar, se asumirá que la tabla está llena, este valor pasa a verdadero
+		for(var i=min;i<=max;i++) { //Salto de línea
+			for(var j=min;j<=max;j++) { // Checa horizontal
+				var id = i+""+j;//Guarda
+				if(document.getElementById(id).innerHTML == "") { //Si hay un espacio vácio
+					allFilled = false;//Aún hay espacio, este valor pasa a falso
+					break;
+				}
+			}
+		}		
+		//Actualiza puntuación
+		document.getElementById("score").innerHTML = score;
+		if(allFilled) { //En caso de que enrealidad ya no quede espacio
+			RevPerder(); //Llama a la función que revisa si hay o no, forma de continuar
+		}
+	}
+
+	function RevPerder() {
+		var Pierde = true; //EL juego asume que perdiste, pero lo va a comprobar
+
+		//Función que desmiente la falta de números que coincidan horizontalmente
+		for(var j=min;j<=max;j++) { //Arrays Horizontales
+			for(var i=min;i<=(max-1);i++) { //Línea siguiente - de forma descendente
+				var val = parseInt(document.getElementById(i+""+j).innerHTML); //checa valor asignado
+				var nVal = parseInt(document.getElementById((i+1)+""+j).innerHTML); //checa el valor de su derecha (+1)
+				if(val == nVal) { //Si da el caso de que ambos valores son iguales
+					Pierde = false; //No perdiste
+					break; //termina y repite hasta haber checado todo
+				}
+			}
+		}		
+
+		//Función que desmiente la falta de números que coincidan verticalmente
+		if(Pierde == true) { //En caso de no haber encontrado coincidencias horizontales
+			for(var i=min;i<=max;i++) { //Arrays verticales
+				for(var j=min;j<=(max-1);j++) { //fila siguiente - izquierda a derecha
+					var val = parseInt(document.getElementById(i+""+j).innerHTML); //checa valor asignado
+					var nVal = parseInt(document.getElementById(i+""+(j+1)).innerHTML); //checa valor de bajo de (+1)
+					if(val == nVal) { //Si da el caso de que ambos valores son iguales
+						Pierde = false; //No perdiste
+						break; //termina y repite hasta haber checado todo
+					}
+				}
+			}
+		}
+		if(Pierde) { //Si no hubo coincidencia en ambos métodos
+			alert("Perdiste"); //manda mensaje de que la cagaste
+		}
+		return false;//termina
+	}
+	function getColor(val)
+	{
+		var color = "#ffffff"; //color blanco por defecto
+		switch(val) { //asigna un color en código hexadécimal dependiendo del valor al que se llegó, después de 2048, todos los valores mayores se quedan color blanco
+			case 2:		color = "#F6CED8"; break;
+			case 4:		color = "#F7BE81"; break;
+			case 8:		color = "#F3F781"; break;
+			case 16:	color = "#BEF781"; break;
+			case 32:	color = "#81F7D8"; break;
+			case 64:	color = "#58D3F7"; break;
+			case 128:	color = "#FA58F4"; break;
+			case 256:	color = "#A901DB"; break;
+			case 512:	color = "#01DF3A"; break;
+			case 1024:	color = "#D7DF01"; break;
+			case 2048:	color = "#D7DF01"; break;
+			default:	color = "#ffffff";
+		}
+		return color;
+	}
+
+	//Función que permite inicio y final del string hexadecimal, esto lo hallé en internet
+	if ( typeof String.prototype.startsWith != 'function' ) {
+	  String.prototype.startsWith = function( str ) {
+		return this.substring( 0, str.length ) === str;
+	  }
+
+	};
+	if ( typeof String.prototype.endsWith != 'function' ) {
+	  String.prototype.endsWith = function( str ) {
+		return this.substring( this.length - str.length, this.length ) === str;
+	  }
+	};
+	document.onkeydown = function(e) {
+		e.preventDefault();//Elimina el scrolling de la pantalla al presionar las teclas de las flechas y les reemplaza con las funciuones establecidas para cada movimiento
+		switch (e.keyCode) { //e.Keycode es una variable preestablecida que determina la tecla que se presionó, guarda el valor del código de tecla, por ejemplo la tecla 37 es el código de tecla de la flecha izquierda del teclado
+			case 37: 
+				left();
+				break;
+			case 38:
+				up();
+				break;
+			case 39:
+				right();
+				break;
+			case 40:
+				down();
+				break;
+		}
+	};
+	//Llama al método de cargar la tabla, sin el, la página se ve en blanco
+	load();
+  //-->
+  </script>
+ </body>
+</html>
